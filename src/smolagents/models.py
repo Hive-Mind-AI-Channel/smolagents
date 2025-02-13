@@ -408,8 +408,25 @@ class HfApiModel(Model):
         )
         response = self.client.chat_completion(**completion_kwargs)
 
-        self.last_input_token_count = response.usage.prompt_tokens
-        self.last_output_token_count = response.usage.completion_tokens
+        #self.last_input_token_count = response.usage.prompt_tokens
+        #self.last_output_token_count = response.usage.completion_tokens
+        # Check if the response contains a usage object with valid token counts.
+        if hasattr(response, "usage") and response.usage is not None and response.usage.prompt_tokens is not None:
+            self.last_input_token_count = response.usage.prompt_tokens
+            self.last_output_token_count = response.usage.completion_tokens
+        else:
+            # Fallback: manually compute token counts if the API did not return them.
+            # NOTE: Replace the following lines with your actual tokenizer. For example, if you are using Hugging Face's tokenizers,
+            # you might have something like:
+            #   from transformers import AutoTokenizer
+            #   tokenizer = AutoTokenizer.from_pretrained(self.model_id)
+            #
+            # Here we assume you have a tokenizer available as `self.tokenizer`.
+            input_text = " ".join([msg.get("content", "") for msg in messages])
+            generated_text = response.choices[0].message.content
+            self.last_input_token_count = len(self.tokenizer.encode(input_text))
+            self.last_output_token_count = len(self.tokenizer.encode(generated_text))
+        
         message = ChatMessage.from_hf_api(response.choices[0].message, raw=response)
         if tools_to_call_from is not None:
             return parse_tool_args_if_needed(message)
