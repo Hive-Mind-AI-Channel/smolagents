@@ -406,7 +406,7 @@ class HfApiModel(Model):
             custom_role_conversions=self.custom_role_conversions,
             **kwargs,
         )
-        response = self.client.chat_completion(**completion_kwargs)
+        response = self.client.chat_completion(max_tokens=16000, **completion_kwargs)
 
         #self.last_input_token_count = response.usage.prompt_tokens
         #self.last_output_token_count = response.usage.completion_tokens
